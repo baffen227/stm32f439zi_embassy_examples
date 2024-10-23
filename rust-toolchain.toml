@@ -8,12 +8,10 @@ components = [
 	"rust-analyzer",
 	"rust-docs",
 ]
-# targets = ["thumbv7em-none-eabi"]
+
 targets = [
 	# For STM32
 	"thumbv7em-none-eabihf",
-	# For ESP32-C3
-	"riscv32imc-unknown-none-elf",
 ]
 
 # Note:
