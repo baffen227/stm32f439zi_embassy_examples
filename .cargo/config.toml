@@ -1,0 +1,24 @@
+# https://doc.rust-lang.org/cargo/reference/config.html
+
+[target.thumbv7em-none-eabihf]
+runner = 'probe-rs run --chip STM32F439ZITx'
+
+[target.riscv32imc-unknown-none-elf]
+runner = 'probe-rs run --chip esp32c3'
+
+# Note: this fix issue where rust-analyzer wouldn't use the good toolchain
+[unstable]
+build-std = ["core", "alloc"]
+
+# FIXME: bug where single target works but just `cargo build` fails
+# https://github.com/rust-lang/cargo/issues/1197
+# [build]
+# target = [
+# 	# Cortex-M4F and Cortex-M7F (with FPU)
+# 	"thumbv7em-none-eabihf",
+# 	# ESP32c3
+# 	"riscv32imc-unknown-none-elf",
+# ]
+
+[env]
+DEFMT_LOG = "trace"
