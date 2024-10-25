@@ -15,7 +15,12 @@ async fn main(_spawner: Spawner) {
 	let p = embassy_stm32::init(Default::default());
 	info!("Hello World!");
 
-	let mut button = ExtiInput::new(Input::new(p.PC13, Pull::Down), p.EXTI13);
+	// TODO: after upgrading to the following commit, we can use the new API
+	// https://github.com/embassy-rs/embassy/commit/3387ee7238f1c9c4eeccb732ba543cbe38ab7ccd
+	// let mut button = ExtiInput::new(p.PC13, p.EXTI13, Pull::Down);
+
+	let button = Input::new(p.PC13, Pull::Down);
+	let mut button = ExtiInput::new(button, p.EXTI13);
 
 	info!("Press the USER button...");
 
