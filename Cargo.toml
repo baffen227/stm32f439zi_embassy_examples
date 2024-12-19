@@ -13,30 +13,43 @@ embassy-stm32 = { version = "0.1.0", features = [
     "time-driver-any",
     "exti",
     "chrono"
-] }
-embassy-sync = { version = "0.6.0", features = ["defmt"] }
-embassy-executor = { version = "0.6.1", features = [
+], git = "https://github.com/embassy-rs/embassy", tag = "embassy-executor-v0.6.3" }
+
+embassy-sync = { version = "0.6.0", features = [
+    "defmt"
+], git = "https://github.com/embassy-rs/embassy", tag = "embassy-executor-v0.6.3" }
+
+embassy-executor = { version = "0.6.3", features = [
     "task-arena-size-32768",
     "arch-cortex-m",
     "executor-thread",
     "executor-interrupt",
     "defmt",
     "integrated-timers"
-] }
+], git = "https://github.com/embassy-rs/embassy", tag = "embassy-executor-v0.6.3" }
+
 embassy-time = { version = "0.3.2", features = [
     "defmt",
     "defmt-timestamp-uptime",
     "tick-hz-32_768"
-] }
-embassy-usb = { version = "0.3.0", features = ["defmt" ] }
-embassy-net = { version = "0.4.0", features = [
-    "defmt",
-    "tcp",
-    "dhcpv4",
-    "medium-ethernet",
-] }
-embassy-net-wiznet = { version = "0.1.0", features = ["defmt"] }
-embassy-futures = { version = "0.1.0"}
+], git = "https://github.com/embassy-rs/embassy", tag = "embassy-executor-v0.6.3" }
+
+embassy-usb = { version = "0.3.0", features = [
+    "defmt"
+], git = "https://github.com/embassy-rs/embassy", tag = "embassy-executor-v0.6.3" }
+
+#embassy-net = { version = "0.4.0", features = [
+#    "defmt",
+#    "tcp",
+#    "dhcpv4",
+#    "medium-ethernet",
+#], git = "https://github.com/embassy-rs/embassy", tag = "embassy-executor-v0.6.3" }
+
+#embassy-net-wiznet = { version = "0.1.0", features = [
+#    "defmt"
+#], git = "https://github.com/embassy-rs/embassy", tag = "embassy-executor-v0.6.3" }
+
+embassy-futures = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy", tag = "embassy-executor-v0.6.3"}
 
 defmt = "0.3"
 defmt-rtt = "0.4"
