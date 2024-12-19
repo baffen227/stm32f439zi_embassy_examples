@@ -12,9 +12,16 @@ use embassy_stm32::{
 	},
 	gpio::{Input, Pull},
 	peripherals::CAN1,
+	rcc::{
+		AHBPrescaler, APBPrescaler, Hse, HseMode, Pll, PllMul, PllPDiv, PllPreDiv, PllSource,
+		Sysclk,
+	},
 };
-use embassy_time::Instant;
+// use embassy_time::Instant;
 use panic_probe as _;
+
+use embassy_stm32::time::Hertz;
+use embassy_time::Timer;
 
 bind_interrupts!(struct Irqs {
 	CAN1_RX0 => Rx0InterruptHandler<CAN1>;
@@ -27,7 +34,39 @@ bind_interrupts!(struct Irqs {
 async fn main(_spawner: Spawner) {
 	info!("Hello World!");
 
-	let mut p = embassy_stm32::init(Default::default());
+	// Use the nixpkg: stm32cubemx for clock config
+
+	// if want to use external oscillator (HSE), need to solder a crystal on the X3
+	// solder points on the demo board
+	// TODO: change the clock settings for more
+	// precise delay
+	let mut config = embassy_stm32::Config::default();
+	// We configure the STM32 to use an external oscillator crystal as the internal
+	// clock HSI is not precise and stable enough for CAN communications.
+	// On the nucleo board we can use the bypass HSE from the ST-LINK MCO as the
+	// clock source. But for production we should use a real oscillator for HSE and
+	// capacitors on the X3 connector. Note: the ST-LINK MCO frequency is 8 Mhz on
+	// our nucleo board.
+	config.rcc.hsi = false;
+	config.rcc.hse = Some(Hse {
+		freq: Hertz::mhz(8),
+		mode: HseMode::Oscillator,
+	});
+	config.rcc.pll_src = PllSource::HSE;
+	config.rcc.sys = Sysclk::PLL1_P;
+	config.rcc.pll = Some(Pll {
+		prediv: PllPreDiv::DIV4,
+		mul: PllMul::MUL180,
+		divp: Some(PllPDiv::DIV2),
+		divq: None, // used by SPI3. 100Mhz.
+		divr: None,
+	});
+	config.rcc.ahb_pre = AHBPrescaler::DIV1;
+
+	config.rcc.apb1_pre = APBPrescaler::DIV4;
+	config.rcc.apb2_pre = APBPrescaler::DIV2;
+
+	let mut p = embassy_stm32::init(config);
 
 	// The next two lines are a workaround for testing without transceiver.
 	// To synchronise to the bus the RX input needs to see a high level.
@@ -36,14 +75,14 @@ async fn main(_spawner: Spawner) {
 	let rx_pin = Input::new(&mut p.PA11, Pull::Up);
 	core::mem::forget(rx_pin);
 
-	let mut can = Can::new(p.CAN1, p.PA11, p.PA12, Irqs);
+	let mut can = Can::new(p.CAN1, p.PD0, p.PD1, Irqs);
 
 	can.modify_filters()
 		.enable_bank(0, Fifo::Fifo0, Mask32::accept_all());
 
 	can.modify_config()
-        .set_loopback(true) // Receive own frames
-        .set_silent(true)
+        .set_loopback(false) // Receive own frames
+        .set_silent(false)
         .set_bitrate(1_000_000);
 
 	can.enable().await;
@@ -51,9 +90,10 @@ async fn main(_spawner: Spawner) {
 	let mut i: u8 = 0;
 	loop {
 		let tx_frame = Frame::new_data(unwrap!(StandardId::new(i as _)), &[i]).unwrap();
-		let tx_ts = Instant::now();
+		//let tx_ts = Instant::now();
 		can.write(&tx_frame).await;
 
+        /*
 		let envelope = can.read().await.unwrap();
 
 		// We can measure loopback latency by using receive timestamp in the `Envelope`.
@@ -70,6 +110,8 @@ async fn main(_spawner: Spawner) {
 			envelope.frame.data()[0],
 			latency.as_micros()
 		);
+        */
 		i = i.wrapping_add(1);
+        Timer::after_millis(500).await;
 	}
 }
