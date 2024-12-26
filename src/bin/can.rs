@@ -87,31 +87,41 @@ async fn main(_spawner: Spawner) {
 
 	can.enable().await;
 
-	let mut i: u8 = 0;
+	//let mut i: u8 = 0;
 	loop {
-		let tx_frame = Frame::new_data(unwrap!(StandardId::new(i as _)), &[i]).unwrap();
+		//let tx_frame = Frame::new_data(unwrap!(StandardId::new(i as _)), &[i]).unwrap();
 		//let tx_ts = Instant::now();
-		can.write(&tx_frame).await;
+		//can.write(&tx_frame).await;
 
-        /*
 		let envelope = can.read().await.unwrap();
+		info!(
+			"frame {:#04x}, {:#04x}, {:#04x}, {:#04x}, {:#04x}, {:#04x}, {:#04x}, {:#04x}",
+			envelope.frame.data()[0],
+			envelope.frame.data()[1],
+			envelope.frame.data()[2],
+			envelope.frame.data()[3],
+			envelope.frame.data()[4],
+			envelope.frame.data()[5],
+			envelope.frame.data()[6],
+			envelope.frame.data()[7],
+		);
+
 
 		// We can measure loopback latency by using receive timestamp in the `Envelope`.
 		// Our frame is ~55 bits long (exlcuding bit stuffing), so at 1mbps loopback
 		// delay is at least 55 us. When measured with `tick-hz-1_000_000` actual
 		// latency is 80~83 us, giving a combined hardware and software overhead of ~25
 		// us. Note that CPU frequency can greatly affect the result.
-		let latency = envelope
-			.ts
-			.saturating_duration_since(tx_ts);
+		//let latency = envelope
+		//	.ts
+		//	.saturating_duration_since(tx_ts);
+		//info!(
+		//	"loopback frame {=u8}, latency: {} us",
+		//	envelope.frame.data()[0],
+		//	latency.as_micros()
+		//);
 
-		info!(
-			"loopback frame {=u8}, latency: {} us",
-			envelope.frame.data()[0],
-			latency.as_micros()
-		);
-        */
-		i = i.wrapping_add(1);
-        Timer::after_millis(500).await;
+		//i = i.wrapping_add(1);
+        //Timer::after_millis(500).await;
 	}
 }
