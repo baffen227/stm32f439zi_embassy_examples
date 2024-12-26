@@ -3,17 +3,18 @@
 # Variable and Imports definition
 let
   # Import overlay to install specific Rust versions
-  rust_overlay = import (fetchTarball "https://github.com/oxalica/rust-overlay/archive/master.tar.gz");
+  rust_overlay = import (fetchTarball
+    "https://github.com/oxalica/rust-overlay/archive/master.tar.gz");
 
   # Import the 24.05 stable Nixpkgs library
   # `import` and `fetchTarball` are both attributes of the `builtins` set that are also available in the global scope.
   # Hence instead of writing `builtins.fetchTarball` we can write `fetchTarball`
   # However `fetchurl` isn't in the global scope.
   pkgs = import
-    (fetchTarball
-      "https://github.com/nixos/nixpkgs/tarball/nixos-24.05"
-    )
-    { overlays = [ rust_overlay ]; };
+    (fetchTarball "https://github.com/nixos/nixpkgs/tarball/nixos-24.11")
+    {
+      overlays = [ rust_overlay ];
+    };
   # # We could specify the Rust version manually like this, however we use a nice helper to import from our `rust-toolchain.toml` file
   #   rustChannel = "nightly";
   #   rustVersion = "latest";
@@ -37,15 +38,11 @@ let
   #   };
 
   # After importing the nixpkgs and applying the rust overlay we can customize our rust installation
-  rust = (
-    pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml
-  );
+  rust = (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml);
 
+  # Put pkgs into scope
 in
-
-# Put pkgs into scope
 with pkgs;
-
 
 # If an issue occur with the cross-compiler, we might have to search and try this again
 # https://github.com/oxalica/rust-overlay/issues/87
@@ -70,6 +67,20 @@ mkShell {
     clippy
     cargo-make
     trunk
+    # (trunk.overrideAttrs (oldAttrs: rec {
+    #   version = "0.21.3";
+    #   src = fetchFromGitHub {
+    #     owner = "trunk-rs";
+    #     repo = "trunk";
+    #     rev = "v${version}";
+    #     hash = "sha256-IRLXn6Z1HYHJiJs6qIa+A2Dwm8rx/7DuJnCoZYInWf0=";
+    #   };
+    #   cargoDeps = oldAttrs.cargoDeps.overrideAttrs (lib.const {
+    #     name = "trunk-vendor.tar.gz";
+    #     inherit src;
+    #     outputHash = "sha256-yZ/7LShTcTW6VeP/hRubPIq7B86sEBIywwjuIvWgDgM=";
+    #   });
+    # }))
     dart-sass
     # # If the need comes, we can specify a specific version of the `dart-sass`. It has to be the same as in the `Trunk.toml`
     # (unstable_pkgs.dart-sass.overrideAttrs rec {
@@ -92,6 +103,7 @@ mkShell {
     cargo-cache
     cargo-tarpaulin
     cargo-nextest
+    cargo-flamegraph
     typos
     cargo-udeps
     cargo-audit
@@ -141,40 +153,36 @@ mkShell {
   RUST_SRC_PATH = "${rust}/lib/rustlib/src/rust/library";
 
   CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER =
-    let
-      inherit (pkgsCross.aarch64-multiplatform.stdenv) cc;
-    in
-    "${cc}/bin/${cc.targetPrefix}cc";
+    let inherit (pkgsCross.aarch64-multiplatform.stdenv) cc;
+    in "${cc}/bin/${cc.targetPrefix}cc";
+
+  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER =
+    let inherit (pkgsCross.aarch64-multiplatform.stdenv) cc;
+    in "${cc}/bin/${cc.targetPrefix}cc";
 
   CC_armv7_unknown_linux_gnueabihf =
-    let
-      inherit (pkgsCross.armv7l-hf-multiplatform.stdenv) cc;
-    in
-    "${cc}/bin/${cc.targetPrefix}cc";
+    let inherit (pkgsCross.armv7l-hf-multiplatform.stdenv) cc;
+    in "${cc}/bin/${cc.targetPrefix}cc";
 
   CC_armv7_unknown_linux_musleabihf =
-    let
-      inherit (pkgsCross.armv7l-hf-multiplatform.stdenv) cc;
-    in
-    "${cc}/bin/${cc.targetPrefix}cc";
+    let inherit (pkgsCross.armv7l-hf-multiplatform.stdenv) cc;
+    in "${cc}/bin/${cc.targetPrefix}cc";
+
+  CC_aarch64_unknown_linux_musl =
+    let inherit (pkgsCross.aarch64-multiplatform.stdenv) cc;
+    in "${cc}/bin/${cc.targetPrefix}cc";
 
   CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER =
-    let
-      inherit (pkgsCross.armv7l-hf-multiplatform.stdenv) cc;
-    in
-    "${cc}/bin/${cc.targetPrefix}cc";
+    let inherit (pkgsCross.armv7l-hf-multiplatform.stdenv) cc;
+    in "${cc}/bin/${cc.targetPrefix}cc";
 
   CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER =
-    let
-      inherit (pkgsCross.armv7l-hf-multiplatform.stdenv) cc;
-    in
-    "${cc}/bin/${cc.targetPrefix}cc";
+    let inherit (pkgsCross.armv7l-hf-multiplatform.stdenv) cc;
+    in "${cc}/bin/${cc.targetPrefix}cc";
 
   CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER =
-    let
-      inherit (stdenv) cc;
-    in
-    "${cc}/bin/${cc.targetPrefix}cc";
+    let inherit (stdenv) cc;
+    in "${cc}/bin/${cc.targetPrefix}cc";
 
   # Setting env var here can be tricky as sometimes Nix will override those in the previous package imports.
   # For common var like CC etc, please set them in the shellHook.
