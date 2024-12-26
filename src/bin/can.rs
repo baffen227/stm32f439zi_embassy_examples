@@ -7,8 +7,7 @@ use embassy_executor::Spawner;
 use embassy_stm32::{
 	bind_interrupts,
 	can::{
-		filter::Mask32, Can, Fifo, Frame, Rx0InterruptHandler, Rx1InterruptHandler,
-		SceInterruptHandler, StandardId, TxInterruptHandler,
+		filter::Mask32, Can, ExtendedId, Fifo, Frame, Rx0InterruptHandler, Rx1InterruptHandler, SceInterruptHandler, StandardId, TxInterruptHandler
 	},
 	gpio::{Input, Pull},
 	peripherals::CAN1,
@@ -87,7 +86,7 @@ async fn main(_spawner: Spawner) {
 
 	can.enable().await;
 
-	//let mut i: u8 = 0;
+	let mut data: u8;
 	loop {
 		//let tx_frame = Frame::new_data(unwrap!(StandardId::new(i as _)), &[i]).unwrap();
 		//let tx_ts = Instant::now();
@@ -95,17 +94,15 @@ async fn main(_spawner: Spawner) {
 
 		let envelope = can.read().await.unwrap();
 		info!(
-			"frame {:#04x}, {:#04x}, {:#04x}, {:#04x}, {:#04x}, {:#04x}, {:#04x}, {:#04x}",
-			envelope.frame.data()[0],
-			envelope.frame.data()[1],
-			envelope.frame.data()[2],
-			envelope.frame.data()[3],
-			envelope.frame.data()[4],
-			envelope.frame.data()[5],
-			envelope.frame.data()[6],
-			envelope.frame.data()[7],
+			"frame {:#04x}",
+			envelope.frame.data()[0]
 		);
 
+		data = envelope.frame.data()[0];
+		data += 1;
+
+		let tx_frame = Frame::new_data(unwrap!(ExtendedId::new(data as _)), &[data]).unwrap();
+		can.write(&tx_frame).await;
 
 		// We can measure loopback latency by using receive timestamp in the `Envelope`.
 		// Our frame is ~55 bits long (exlcuding bit stuffing), so at 1mbps loopback
